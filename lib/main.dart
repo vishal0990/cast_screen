@@ -1,87 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
-  runApp(MaterialApp(home: CastScreen()));
+void main() => runApp(CastApp());
+
+class CastApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Cast App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: HomeScreen(),
+    );
+  }
 }
 
-class CastScreen extends StatefulWidget {
-  @override
-  _CastScreenState createState() => _CastScreenState();
-}
-
-class _CastScreenState extends State<CastScreen> with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    CastService.startCasting(); // Start casting when the screen is loaded
-  }
-
-  @override
-  void dispose() {
-    CastService.stopCasting(); // Stop casting when the app is destroyed
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      CastService
-          .pauseCasting(); // Pause casting when the app goes to the background
-    } else if (state == AppLifecycleState.resumed) {
-      CastService.startCasting(); // Resume casting when the app is back
-    }
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cast Screen')),
+      appBar: AppBar(
+        title: const Text("Cast Screen Example"),
+        actions: [
+          CastButton(), // Add a casting button
+        ],
+      ),
       body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: CastService.pauseCasting,
-              child: Text('Pause Casting'),
-            ),
-            ElevatedButton(
-              onPressed: CastService.stopCasting,
-              child: Text('Stop Casting'),
-            ),
-          ],
-        ),
+        child: Text("Hello, this is your app's main screen."),
       ),
     );
   }
 }
 
-class CastService {
-  static const MethodChannel _channel = MethodChannel('screen_cast_channel');
-
-  static Future<void> startCasting() async {
-    try {
-      await _channel.invokeMethod('startCasting');
-    } catch (e) {
-      print("Failed to start casting: $e");
-    }
+class CastButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.cast),
+      onPressed: () {
+        // Open cast menu
+        _openCastMenu(context);
+      },
+    );
   }
 
-  static Future<void> pauseCasting() async {
-    try {
-      await _channel.invokeMethod('pauseCasting');
-    } catch (e) {
-      print("Failed to pause casting: $e");
-    }
+  void _openCastMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return ListView(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.tv),
+              title: const Text("Connect to TV"),
+              onTap: () {
+                // Handle connection logic
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.laptop),
+              title: const Text("Connect to Laptop"),
+              onTap: () {
+                // Handle connection logic
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class CastController {
+  static const _channel = MethodChannel('com.example.castapp/cast');
+
+  static Future<void> startCasting() async {
+    await _channel.invokeMethod('startCasting');
   }
 
   static Future<void> stopCasting() async {
-    try {
-      await _channel.invokeMethod('stopCasting');
-    } catch (e) {
-      print("Failed to stop casting: $e");
+    await _channel.invokeMethod('stopCasting');
+  }
+}
+
+class CastLifecycleObserver extends WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      CastController.stopCasting();
     }
   }
 }

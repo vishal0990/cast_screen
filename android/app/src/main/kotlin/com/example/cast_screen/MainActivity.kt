@@ -9,7 +9,38 @@ import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+import androidx.annotation.NonNull
+import io.flutter.embedding.engine.FlutterEngine
+
+class MainActivity: FlutterActivity() {
+    private val CHANNEL = "com.example.castapp/cast"
+
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "startCasting") {
+                startCasting()
+                result.success("Casting started")
+            } else if (call.method == "stopCasting") {
+                stopCasting()
+                result.success("Casting stopped")
+            } else {
+                result.notImplemented()
+            }
+        }
+    }
+
+    private fun startCasting() {
+        // Start screen casting logic using Google Cast SDK
+    }
+
+    private fun stopCasting() {
+        // Stop screen casting logic
+    }
+}
+
+
+/*class MainActivity : FlutterActivity() {
     private val SCREEN_CAST_REQUEST_CODE = 1001
     private lateinit var screenCastManager: ScreenCastManager
     private var projectionIntent: Intent? = null
@@ -63,6 +94,6 @@ class MainActivity : FlutterActivity() {
             screenCastManager.startCasting(projectionIntent!!)
         }
     }
-}
+}*/
 
 
